@@ -16,7 +16,7 @@ class ProductDetailSerializer(serializers.ModelSerializer):
 class CategoryListSerializer(serializers.ModelSerializer):
     class Meta:
         model = Category
-        fields = 'id name'.split()
+        fields = 'id name count'.split()
         # # fields = '__all__'
         # exclude = 'id text'.split()
 
@@ -36,3 +36,9 @@ class ReviewDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = Review
         fields = '__all__'
+
+class ProductReviewsSerializer(serializers.ModelSerializer):
+    reviews = ReviewDetailSerializer(many=True)
+    class Meta:
+        model = Product
+        fields = 'id title price reviews rating'.split()

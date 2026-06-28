@@ -56,3 +56,9 @@ def review_detail_api_fiew(request, id):
         return Response(data={'error': 'Review not found!'}, status=status.HTTP_404_NOT_FOUND)
     data = seriallizers.ReviewDetailSerializer(review, many=False).data
     return Response(data=data)
+
+@api_view(http_method_names=['GET'])
+def products_reviews_api_view(request):
+    products = Product.objects.prefetch_related('reviews').all()
+    data = seriallizers.ProductReviewsSerializer(products, many=True).data
+    return Response(data=data)
