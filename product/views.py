@@ -1,10 +1,9 @@
-from django.shortcuts import render
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from .models import Product, Category, Review
-from django.forms import model_to_dict
 from . import seriallizers
 from rest_framework import status
+from django.db import transaction
 
 @api_view(http_method_names=['GET', 'POST'])
 def product_list_create_api_view(request):
@@ -15,17 +14,21 @@ def product_list_create_api_view(request):
             data=data
         )
     elif request.method == 'POST':
-        title = request.data.get('title')
-        price = request.data.get('price')
-        description = request.data.get('description')
-        category_id = request.data.get('category_id')
-        product = Product.objects.create(
-            title=title,
-            price=price,
-            description=description,
-            category_id=category_id
-        )
-        product.save()
+        serializer = seriallizers.ProductValidateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+
+        title = serializer.validated_data.get('title')
+        price = serializer.validated_data.get('price')
+        description = serializer.validated_data.get('description')
+        category_id = serializer.validated_data.get('category_id')
+        with transaction.atomic():
+            product = Product.objects.create(
+                title=title,
+                price=price,
+                description=description,
+                category_id=category_id
+            )
+            product.save()
         return Response(status=status.HTTP_201_CREATED, data=seriallizers.ProductDetailSerializer(product).data)
 
 @api_view(http_method_names=['GET', 'PUT', 'DELETE'])
@@ -38,12 +41,15 @@ def product_detail_api_fiew(request, id):
         data = seriallizers.ProductDetailSerializer(product, many=False).data
         return Response(data=data)
     elif request.method == 'PUT':
-        product.title = request.data.get('title')
-        product.price = request.data.get('price')
-        product.description = request.data.get('description')
-        product.category_id = request.data.get('category_id')
-        product.save()
-        return Response(status=status.HTTP_201_CREATED, data=seriallizers.ProductDetailSerializer(product).data)
+        serializer = seriallizers.ProductValidateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        with transaction.atomic():
+            product.title = serializer.validated_data.get('title')
+            product.price = serializer.validated_data.get('price')
+            product.description = serializer.validated_data.get('description')
+            product.category_id = serializer.validated_data.get('category_id')
+            product.save()
+        return Response(status=status.HTTP_200_OK, data=seriallizers.ProductDetailSerializer(product).data)
     elif request.method == 'DELETE':
         product.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -57,10 +63,10 @@ def category_list_create_api_view(request):
             data=data
         )
     elif request.method == 'POST':
-        name = request.data.get('name')
-        category = Category.objects.create(
-            name=name
-        )
+        serializer = seriallizers.CategoryValidateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        with transaction.atomic():
+            category = Category.objects.create(name=serializer.validated_data.get('name'))
         return Response(status=status.HTTP_201_CREATED, data=seriallizers.CategoryDetailSerializer(category).data)
 
 @api_view(http_method_names=['GET', 'PUT', 'DELETE'])
@@ -73,9 +79,12 @@ def category_detail_api_fiew(request, id):
         data = seriallizers.CategoryDetailSerializer(category, many=False).data
         return Response(data=data)
     elif request.method == 'PUT':
-        category.name = request.data.get('name')
-        category.save()
-        return Response(status=status.HTTP_201_CREATED, data=seriallizers.CategoryDetailSerializer(category).data)
+        serializer = seriallizers.CategoryValidateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        with transaction.atomic():
+            category.name = serializer.validated_data.get('name')
+            category.save()
+        return Response(status=status.HTTP_200_OK, data=seriallizers.CategoryDetailSerializer(category).data)
     elif request.method == 'DELETE':
         category.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
@@ -89,14 +98,14 @@ def review_list_create_api_view(request):
             data=data
         )
     elif request.method == 'POST':
-        text = request.data.get('text')
-        product_id = request.data.get('product_id')
-        stars = request.data.get('stars')
-        review = Review.objects.create(
-            text=text,
-            product_id=product_id,
-            stars=stars
-        )
+        serializer = seriallizers.ReviewValidateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        with transaction.atomic():
+            review = Review.objects.create(
+                text=serializer.validated_data.get('text'),
+                product_id=serializer.validated_data.get('product_id'),
+                stars=serializer.validated_data.get('stars')
+            )
         return Response(status=status.HTTP_201_CREATED, data=seriallizers.ReviewDetailSerializer(review).data)
 
 @api_view(http_method_names=['GET', 'PUT', 'DELETE'])
@@ -109,11 +118,14 @@ def review_detail_api_fiew(request, id):
         data = seriallizers.ReviewDetailSerializer(review, many=False).data
         return Response(data=data)
     elif request.method == 'PUT':
-        review.text = request.data.get('text')
-        review.product_id = request.data.get('product_id')
-        review.stars = request.data.get('stars')
-        review.save()
-        return Response(status=status.HTTP_201_CREATED, data=seriallizers.ReviewDetailSerializer(review).data)
+        serializer = seriallizers.ReviewValidateSerializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        with transaction.atomic():
+            review.text = serializer.validated_data.get('text')
+            review.product_id = serializer.validated_data.get('product_id')
+            review.stars = serializer.validated_data.get('stars')
+            review.save()
+        return Response(status=status.HTTP_200_OK, data=seriallizers.ReviewDetailSerializer(review).data)
     elif request.method == 'DELETE':
         review.delete()
         return Response(status=status.HTTP_204_NO_CONTENT)
