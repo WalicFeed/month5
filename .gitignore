@@ -1,0 +1,8 @@
+__pycache__/
+.Python
+build/
+.pytest_cache/
+db.sqlite3
+.env
+.vscode/
+.idea/
